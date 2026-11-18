@@ -17,6 +17,10 @@ public class DasherPayoutService implements PayoutService {
             return totalPay;
         }
         for (final Delivery delivery : deliveries) {
+            if (delivery == null) {
+                System.out.println("\tskipping...delivery is null");
+                continue;
+            }
             final BigDecimal basePay = delivery.peakHour() ? delivery.basePay().multiply(BigDecimal.TWO) : delivery.basePay();
             final BigDecimal deliveryPay = basePay.add(delivery.tip());
             totalPay = totalPay.add(deliveryPay);
