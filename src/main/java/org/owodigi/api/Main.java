@@ -7,6 +7,7 @@ import org.owodigi.api.service.PayoutService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
@@ -18,7 +19,22 @@ public class Main {
         testTip(service);
         testPeakHour(service);
         testMultipleDeliveries(service);
+        testPayoutByDasher(service);
         System.out.println("All tests passed.");
+    }
+
+    private static void testPayoutByDasher(final PayoutService service) {
+        final Delivery delivery1 = new Delivery("1", "a", BigDecimal.ONE, BigDecimal.TEN, false);
+        final Delivery delivery2 = new Delivery("2", "a", BigDecimal.ONE, BigDecimal.TEN, false);
+        final Delivery delivery3 = new Delivery("3", "b", BigDecimal.ONE, BigDecimal.TEN, false);
+        final Delivery delivery4 = new Delivery("4", "b", BigDecimal.ONE, BigDecimal.TEN, false);
+        final Delivery delivery5 = new Delivery("5", "c", BigDecimal.ONE, BigDecimal.TEN, false);
+        final List<Delivery> input = List.of(delivery1, delivery2, delivery3, delivery4, delivery5);
+        final Map<String, BigDecimal> expected = Map.of(
+                "a", BigDecimal.valueOf(22),
+                "b", BigDecimal.valueOf(22),
+                "c", BigDecimal.valueOf(11));
+        testCalculatePayoutByDasher(input, expected, service, "testPayoutByDasher");
     }
 
     private static void testNullDelivery(final PayoutService service) {
@@ -93,6 +109,30 @@ public class Main {
             } else {
                 throw new AssertionError("Threw unexpected exception " + ex);
             }
+        }
+    }
+
+    private static void testCalculatePayoutByDasher(final List<Delivery> input, final Map<String, BigDecimal> expected, final PayoutService service, final String message) {
+        System.out.println(message);
+        try {
+            final Map<String, BigDecimal> actual = service.calculatePayoutByDasher(input);
+            assertEquals(expected, actual, message);
+        } catch (final Exception ex) {
+            if (expected == null) {
+                System.out.println("\tThrew expected exception " + ex);
+            } else {
+                throw new AssertionError("Threw unexpected exception " + ex);
+            }
+        }
+    }
+
+    private static void assertEquals(final Map<String, BigDecimal> expected, final Map<String, BigDecimal> actual, final String message) {
+        if (expected.size() != actual.size()) {
+            throw new AssertionError(message + ": expected: " + expected + " is not equal to actual: " + actual);
+        }
+        for (final Map.Entry<String, BigDecimal> expectedEntry : expected.entrySet()) {
+            final BigDecimal actualPayout = actual.get(expectedEntry.getKey());
+            assertEquals(expectedEntry.getValue(), actualPayout, message + "; dasherId: " + expectedEntry.getKey());
         }
     }
 
